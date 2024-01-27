@@ -3,7 +3,7 @@ import tensorflow as tf
 # from tensorflow.keras.applications import MobileNetV2
 from keras.layers import GlobalAveragePooling2D, Dense, Dropout
 from tf.keras.applications import applications as tf_app
-from keras.utils.np_utils import to_categorical  
+from keras.utils import to_categorical  
 from keras import Model 
 import pyaiutils
 import os
@@ -30,35 +30,42 @@ class TensorFlowModel(Model):
 		self.create_model() 
 
 
+	def create_mobile_v2(self):
+		base_model = tf_app.MobileNetV2(input_shape=self.input_shape,
+										include_top=False, weights='imagenet')
+		preprocess_input = tf_app.mobilenet_v2.preprocess_input
+
+		return base_model, preprocess_input
+
+	def create_VGG16(self):
+		base_model = tf_app.VGG16(input_shape=self.input_shape,
+										include_top=False, weights='imagenet')
+		preprocess_input = tf_app.vgg16.preprocess_input
+
+		return base_model, preprocess_input
+
+	def create_ResNet50(self):
+		base_model = tf_app.ResNet50(input_shape=self.input_shape,
+										include_top=False, weights='imagenet')
+		preprocess_input =  tf_app.resnet50.preprocess_input
+
+		return base_model, preprocess_input
+
 	def create_model(self):
 		""" Loads a generic backbone model with custom output layers
 			models from https://www.tensorflow.org/api_docs/python/tf/keras/applications 
 		"""
 
-		if self.model_name == "mobile_netv2":
-			base_model = tf_app.MobileNetV2(input_shape=self.input_shape,
-											include_top=False,
-											weights='imagenet')
-			preprocess_input = tf_app.mobilenet_v2.preprocess_input
+		model_dict = {"mobile_netv2": self.create_mobile_v2,
+									"VGG16": self.create_VGG16,
+									"ResNet50": self.create_ResNet50}
 			
-		elif self.model_name == "VGG16":
-			base_model = tf_app.VGG16(input_shape=self.input_shape,
-																include_top=False, 
-															weights='imagenet')
-			preprocess_input = tf_app.vgg16.preprocess_input
+		base_model, preprocessing_layer = model_dict.get(self.model_name)
 
-		elif self.model_name == "EfficientNetB0":
-			base_model = tf_app.EfficientNetB0(input_shape=self.input_shape,
-																include_top=False, 
-															weights='imagenet')
-			preprocess_input = tf_app.efficientnet.preprocess_input
-
-		elif self.model_name == "ResNet50":
-			base_model = tf_app.ResNet50(input_shape=self.input_shape,
-																include_top=False, 
-															weights='imagenet')
-			preprocess_input =  tf_app.resnet50.preprocess_input
-
+		if base_model is None:
+			raise Exception(f"""Invalid name for TensorFlowModel
+									 			 Valid values: {model_dict.keys()}""")
+		
 		for layer in base_model.layers:
 			layer.trainable = False	
 
@@ -66,7 +73,7 @@ class TensorFlowModel(Model):
 		prediction_layer = Dense(self.output_shape, activation="softmax")
 
 		inputs = tf.keras.Input(shape=self.input_shape)
-		x = preprocess_input(inputs)
+		x = preprocessing_layer(inputs)
 		x = base_model(x,training=False)
 		x = global_average_layer(x)
 		x = Dense(64)(x)
