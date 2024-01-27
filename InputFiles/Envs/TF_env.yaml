@@ -1,0 +1,19 @@
+name: tst
+channels:
+  - conda-forge
+dependencies:
+  - python=3.8
+  - tensorflow
+  - pip
+  - pip:    
+    - tensorflow-datasets
+    - tensorflow-model-optimization
+    - PyYAML
+    - h5py
+    - scikit-learn
+    - mlflow==2.3.0
+    - pandas
+    - pyaiutils==0.1.1
+    - imblearn
+    - numpy
+    - matplotlib
