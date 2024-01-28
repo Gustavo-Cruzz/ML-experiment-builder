@@ -1,9 +1,15 @@
 name: ML_pipeline
 #TODO Make a way for the user to choose environment from yaml
-conda_env: InputFiles/Environments/
+conda_env: InputFiles/Envs/TF_env.yaml
 
 entry_points:
  
+  main:
+    parameters:
+      yaml_path: {type: str}
+
+    command: "python3 workflow/main.py --yaml_path {yaml_path}"
+
   train:
     parameters:
       yaml_path: {type: str}

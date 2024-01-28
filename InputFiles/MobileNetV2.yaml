@@ -3,9 +3,9 @@ train:
   model_class_name: TensorFlowModel
   model_path: utils/models/mobile_netv2.py
   classes: 10
-  save_path:  mlruns/train/
-  batch_size: 200
-  epochs: 10
+  save_path:  mlruns/
+  batch_size: 1000
+  epochs: 1
   dataset_name: cifar10
   dataset_class: TensorFlowDataset
   dataset_type: Image
