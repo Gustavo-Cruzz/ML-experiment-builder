@@ -1,26 +1,23 @@
 # Third party imports
 import tensorflow_datasets as tfds
 import tensorflow as tf
-from TF_preprocess_img_dataset import PreprocessImageDataset
-
+from Datasets import TF_preprocess_img_dataset 
 # Application specific imports.
-from utils.dataset.abs_dataset import ABSDataset
+from Datasets import Abstract_dataset
 
-class TensorFlowDataset(ABSDataset):
+class TensorFlowDataset(Abstract_dataset.ABSDataset):
 	
 	def __init__(self, parameters):
 		self.dataset_type: str = parameters["dataset_type"]
 		self.dataset_name: str = parameters["dataset_name"]
-		self.target: str = parameters["target"]
-		self.batch_size: int = int(parameters["batch_size"])
+		preprocess_images = TF_preprocess_img_dataset.PreprocessImageDataset(parameters)
 
-		self.__create_dataset()
-		
+		self.__create_dataset()		
+
 		if self.dataset_type.upper() == "IMAGE":
-			results = PreprocessImageDataset(parameters, self.train, self.val_dataset, self.test)
-			self.train = results['train']
-			self.val_dataset = results['val_dataset']
-			self.test = results['test']
+			self.train_dataset = preprocess_images.optimize_train_set(self.train_dataset) 
+			self.val_dataset = preprocess_images.optimize_validation_set(self.val_dataset) 
+			self.test_dataset = preprocess_images.optimize_test_set(self.test_dataset)
 
 	def __create_dataset(self):
 		#TODO checar funcionalidade do shuffle e proportion

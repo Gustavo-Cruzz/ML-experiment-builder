@@ -1,20 +1,16 @@
 import tensorflow as tf
 
+"""This script was developed based on:
+https://www.tensorflow.org/guide/data_performance
+https://www.tensorflow.org/datasets/performances
+"""
 
 class PreprocessImageDataset():
 	
-	def __init__(self, parameters, train, val, test):
+	def __init__(self, parameters):
 		self.image_size = parameters["image_size"]
+		self.batch_size: int = int(parameters["batch_size"])
 		
-		self.train_dataset = train
-		self.test_dataset = test
-		self.val_dataset = val
-
-		self.optimize_train_set()
-		self.optimize_validation_set()
-		self.optimize_test_set()
-
-		return {'train': self.train_dataset, 'val_dataset': self.val_dataset, 'test': self.test_dataset}
 
 	def normalize_img(self, image, label):
 		"""
@@ -26,32 +22,32 @@ class PreprocessImageDataset():
 		"""
 		return tf.cast(tf.image.resize(image, (self.image_size[0], self.image_size[1])), tf.float32), label
 	
-	def optimize_train_set(self):
+	def optimize_train_set(self, train_dataset):
 		"""
 		Optimizes dataset loading time to avoid data starvation
 		on the GPU by prefetching, batching and shuffling data
 		ahead of time
 		"""
 		print("optimizing training")
-		self.train_dataset = self.train_dataset.batch(self.batch_size).map(self.normalize_img, num_parallel_calls=tf.data.AUTOTUNE)
-		self.train_dataset = self.train_dataset.shuffle(buffer_size=10).prefetch(tf.data.AUTOTUNE)
+		train_dataset = train_dataset.batch(self.batch_size).map(self.normalize_img, num_parallel_calls=tf.data.AUTOTUNE)
+		return train_dataset.shuffle(buffer_size=10).prefetch(tf.data.AUTOTUNE)
 		
-	def optimize_test_set(self):
+	def optimize_test_set(self, test_dataset):
 		"""
 		Optimizes dataset loading time to avoid data starvation
 		on the GPU by batching, caching and prefetching data
 		ahead of time.
 		"""
 
-		self.test_dataset = self.test_dataset.batch(self.batch_size).map(self.normalize_img, num_parallel_calls=tf.data.AUTOTUNE)
-		self.test_dataset = self.test_dataset.prefetch(tf.data.AUTOTUNE)
+		test_dataset = test_dataset.batch(self.batch_size).map(self.normalize_img, num_parallel_calls=tf.data.AUTOTUNE)
+		return test_dataset.prefetch(tf.data.AUTOTUNE)
 
-	def optimize_validation_set(self):
+	def optimize_validation_set(self, val_dataset):
 		"""
 		Optimizes dataset loading time to avoid data starvation
 		on the GPU by batching, caching and prefetching data
 		ahead of time.
 		"""
 
-		self.val_dataset = self.val_dataset.batch(self.batch_size).map(self.normalize_img, num_parallel_calls=tf.data.AUTOTUNE)
-		self.val_dataset = self.val_dataset.prefetch(tf.data.AUTOTUNE)
+		val_dataset = val_dataset.batch(self.batch_size).map(self.normalize_img, num_parallel_calls=tf.data.AUTOTUNE)
+		return val_dataset.prefetch(tf.data.AUTOTUNE)
