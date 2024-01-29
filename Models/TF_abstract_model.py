@@ -1,6 +1,6 @@
 import abc
 
-class Model(abc.ABC):
+class ABS_Model(abc.ABC):
     """ Base abstract class for each architecture model that will be created.
 
     Args:
@@ -17,7 +17,7 @@ class Model(abc.ABC):
             sample_x ({DataFrame, array}): The instance with the attributes
             that will train the model.
             sample_y (array): A array of shape with the labels for each
-             instance
+            instance
             that will train the model.
         """
         pass

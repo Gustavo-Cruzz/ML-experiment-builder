@@ -2,15 +2,15 @@
 import tensorflow as tf
 # from tensorflow.keras.applications import MobileNetV2
 from keras.layers import GlobalAveragePooling2D, Dense, Dropout
-from tf.keras.applications import applications as tf_app
+from tensorflow.keras import applications as tf_app
 from keras.utils import to_categorical  
 from keras import Model 
 import pyaiutils
 import os
 # Application specific imports.
-from models.abstract_model import Model
+from Models import TF_abstract_model 
 
-class TensorFlowModel(Model):
+class TensorFlowModel(TF_abstract_model.ABS_Model):
 
 	def __init__(self, parameters):	
 		if "device" in parameters:
@@ -35,21 +35,21 @@ class TensorFlowModel(Model):
 										include_top=False, weights='imagenet')
 		preprocess_input = tf_app.mobilenet_v2.preprocess_input
 
-		return base_model, preprocess_input
+		return (base_model, preprocess_input)
 
 	def create_VGG16(self):
 		base_model = tf_app.VGG16(input_shape=self.input_shape,
 										include_top=False, weights='imagenet')
 		preprocess_input = tf_app.vgg16.preprocess_input
 
-		return base_model, preprocess_input
+		return (base_model, preprocess_input)
 
 	def create_ResNet50(self):
 		base_model = tf_app.ResNet50(input_shape=self.input_shape,
 										include_top=False, weights='imagenet')
 		preprocess_input =  tf_app.resnet50.preprocess_input
 
-		return base_model, preprocess_input
+		return (base_model, preprocess_input)
 
 	def create_model(self):
 		""" Loads a generic backbone model with custom output layers
@@ -60,7 +60,7 @@ class TensorFlowModel(Model):
 									"VGG16": self.create_VGG16,
 									"ResNet50": self.create_ResNet50}
 			
-		base_model, preprocessing_layer = model_dict.get(self.model_name)
+		base_model, preprocessing_layer = model_dict.get(self.model_name)()
 
 		if base_model is None:
 			raise Exception(f"""Invalid name for TensorFlowModel
