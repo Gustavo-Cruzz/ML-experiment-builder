@@ -37,7 +37,7 @@ class TensorFlowDataset(Abstract_dataset.ABSDataset):
 
 		except tfds.core.registered.DatasetNotFoundError:
 			raise Exception("Dataset not found in tensorflow_datasets; Ensure that the dataset has 'train' or 'test' split")
-	
+ 
 	def get_train_data(self):
 		"""Returns the train dataset"""
 		return self.train_dataset

@@ -1,13 +1,9 @@
-# third party imports
 import tensorflow as tf
-# from tensorflow.keras.applications import MobileNetV2
 from keras.layers import GlobalAveragePooling2D, Dense, Dropout
 from tensorflow.keras import applications as tf_app
-from keras.utils import to_categorical  
-from keras import Model 
+from keras.utils import to_categorical
 import pyaiutils
 import os
-# Application specific imports.
 from Models import TF_abstract_model 
 
 class TensorFlowModel(TF_abstract_model.ABS_Model):
@@ -19,7 +15,6 @@ class TensorFlowModel(TF_abstract_model.ABS_Model):
 		
 		self.model_name = parameters["model_name"]
 		self.dataset_name = parameters["dataset_name"]
-		
 		self.input_shape = parameters["image_size"]
 		self.output_shape = parameters["classes"]
 		self.batch_size = parameters["batch_size"]
@@ -70,7 +65,6 @@ class TensorFlowModel(TF_abstract_model.ABS_Model):
 			layer.trainable = False	
 
 		global_average_layer = GlobalAveragePooling2D()
-		prediction_layer = Dense(self.output_shape, activation="softmax")
 
 		inputs = tf.keras.Input(shape=self.input_shape)
 		x = preprocessing_layer(inputs)
@@ -79,7 +73,7 @@ class TensorFlowModel(TF_abstract_model.ABS_Model):
 		x = Dense(64)(x)
 		x = Dropout(0.2)(x)
 		
-		outputs = prediction_layer(x)
+		outputs = Dense(self.output_shape, activation="softmax")(x)
 		
 		self.model = tf.keras.Model(inputs, outputs)
 		self.model.compile(loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=False),
@@ -91,7 +85,7 @@ class TensorFlowModel(TF_abstract_model.ABS_Model):
 			dataset (tf_dataset): Object containing train,test and val datasets
 		"""
 		
-		self.model.fit(
+		results =  self.model.fit(
 					dataset.train_dataset,
 					batch_size=self.batch_size,
 					epochs=self.epochs,
@@ -99,6 +93,7 @@ class TensorFlowModel(TF_abstract_model.ABS_Model):
 					validation_data=dataset.val_dataset,
 					shuffle=True
 				)
+		return results
 
 	def predict(self, dataset):
 		"""
@@ -130,9 +125,7 @@ class TensorFlowModel(TF_abstract_model.ABS_Model):
 		"""
 
 		labels = dataset.get_test_y()
-
 		one_hot_labels = to_categorical(labels, self.output_shape)
-
 		class_names = [i for (i,j) in enumerate(range(0, self.output_shape))]
 		return [pyaiutils.get_metrics(one_hot_labels, pred, class_names = class_names)]
 		
