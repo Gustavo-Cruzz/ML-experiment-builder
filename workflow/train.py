@@ -1,7 +1,9 @@
 # Third party imports
-import mlflow
 import os
-from datetime import datetime
+import mlflow
+import tempfile
+import numpy as np
+import matplotlib.pyplot as plt
 from Models import TF_model_loader
 from Datasets import TF_dataset_loader
 
@@ -13,19 +15,30 @@ def log_data(save_path, metrics, params, pred):
   mlflow.log_param("parameters", params)
   mlflow.log_param("save_path", save_path) 
 
-  for df in metrics: # Merics come as a dataframe
-    data = df.to_dict(orient='records') 
-    for i in range(len(data)):
-      if data[i]['Classes'] == 'Média': #Here we save the averages of each one in a dict
-            data[i].pop('Classes', None)
-            data[i] = {k + 'mean': v for k, v in data[i].items()}
-      mlflow.log_metrics(data[i]) #Log metrics individually
-    
- 
+  mlflow.log_dict(metrics[0].to_df()) #Log all metrics
+
+def generate_train_graphics(results, save_path):  
+  for key, value in results.history.items():
+
+    if key[:3] == "val": #Skip validation indices
+      continue
+  
+    final_value = np.round(value[-1], 2)
+    plt.figure(figsize=(10,8))
+    plt.title(f"Model's {key} - {final_value}")
+    plt.xlabel("Epochs")
+    plt.ylabel("Values")
+    plt.plot(value, label="key")
+    plt.plot(results.history[f"val_{key}"], label=f"val_{key}")
+    plt.legend()
+    fig = plt.plot()
+    mlflow.log_figure(fig, f"{key}.png")
+    plt.close()
+
 def train_routine(params, experiment_id):
   print(params)
-  # exit()
-  save_path = f"..{params['save_path']}/{experiment_id}/train/"
+
+  save_path = f"..{params['save_path']}/{experiment_id}/train/"   
 
   model = TF_model_loader.TensorFlowModel(params)
   print(f"\n Training model, {model}")
@@ -34,14 +47,12 @@ def train_routine(params, experiment_id):
   dataset = TF_dataset_loader.TensorFlowDataset(params)  
 
   # Fit, predict and log metrics and model
-  model.fit(dataset)
+  results = model.fit(dataset)
 
   pred = model.predict(dataset)
   metrics = model.get_metrics(dataset, pred)
 
-  if not os.path.isdir(save_path):
-      os.makedirs(save_path)
-      
-  model.save_model(save_path, "Base_model")
+  generate_train_graphics(results, save_path)
 
+  model.save_model(save_path, "Base_model")
   log_data(save_path, metrics, params, pred)
