@@ -1,7 +1,6 @@
 # Third party imports
 import os
 import mlflow
-import tempfile
 import numpy as np
 import matplotlib.pyplot as plt
 from Models import TF_model_loader
