@@ -1,12 +1,11 @@
 # Third party imports
-import tensorflow_datasets as tfds
+from typing import List
 import tensorflow as tf
+import tensorflow_datasets as tfds
 from keras.utils import to_categorical
-from Datasets import TF_preprocess_img_dataset
-from typing import List 
 
-# Application specific imports.
 from Datasets import Abstract_dataset
+from Datasets import TF_preprocess_img_dataset
 
 
 class TensorFlowDataset(Abstract_dataset.ABSDataset):
@@ -61,13 +60,13 @@ class TensorFlowDataset(Abstract_dataset.ABSDataset):
         return self.test_dataset
 
     @tf.autograph.experimental.do_not_convert
-    def get_train_x(self) -> list:
+    def get_train_x(self) -> List:
         """Returns the train features"""
         train_data = self.get_train_data()
         return list(train_data.map(lambda image, _: image))
 
     @tf.autograph.experimental.do_not_convert
-    def get_train_y(self) -> list:
+    def get_train_y(self) -> List:
         """Returns unprocessed and unoptimized train targets"""
         train_data = list(self.train_data.map(lambda _, label: label))
         return to_categorical(
@@ -75,13 +74,13 @@ class TensorFlowDataset(Abstract_dataset.ABSDataset):
         )
 
     @tf.autograph.experimental.do_not_convert
-    def get_test_x(self) -> list:
+    def get_test_x(self) -> List:
         """Returns the test features"""
         test_data = self.get_test_data()
         return list(test_data.map(lambda image, _: image))
 
     @tf.autograph.experimental.do_not_convert
-    def get_test_y(self) -> list:
+    def get_test_y(self) -> List:
         """Returns unprocessed and unoptimized test targets"""
         test_data = list(self.test_dataset.map(lambda _, label: label))
         return to_categorical(

@@ -19,14 +19,16 @@ class PreprocessImageDataset:
         self.image_size: Tuple[int, int, int] = parameters["image_size"]
         self.batch_size: int = int(parameters["batch_size"])
 
-    def normalize_img(self, image: tf.Tensor, label: tf.Tensor) -> Tuple[tf.Tensor, tf.Tensor]:
+    def normalize_img(
+        self, image: tf.Tensor, label: tf.Tensor
+    ) -> Tuple[tf.Tensor, tf.Tensor]:
         """
         Normalizes images: `uint8` -> `float32`.
 
         Args:
             image (tf.Tensor): Multi-dimensional Tensor containing RGB values of images
             label (tf.Tensor): Labels for each image
-            
+
         Returns:
             Tuple containing normalized image and label
         """
@@ -43,7 +45,7 @@ class PreprocessImageDataset:
         Optimizes dataset loading time to avoid data starvation
         on the GPU by prefetching, batching and shuffling data
         ahead of time.
-        
+
         Args:
             train_dataset (tf.data.Dataset): TensorFlow dataset containing training data
 
@@ -60,7 +62,7 @@ class PreprocessImageDataset:
         Optimizes dataset loading time to avoid data starvation
         on the GPU by batching, caching and prefetching data
         ahead of time.
-        
+
         Args:
             test_dataset (tf.data.Dataset): TensorFlow dataset containing training data
 
@@ -77,7 +79,7 @@ class PreprocessImageDataset:
         Optimizes dataset loading time to avoid data starvation
         on the GPU by batching, caching and prefetching data
         ahead of time.
-        
+
         Args:
             val_dataset (tf.data.Dataset): TensorFlow dataset containing training data
 
