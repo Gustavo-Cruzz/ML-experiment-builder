@@ -1,15 +1,11 @@
 import abc
 
-
 class ABS_Model(abc.ABC):
     """Base abstract class for each architecture model that will be created.
 
     Args:
         abc (ABC): It's the abstract base class to create the model.
     """
-
-    model_name = ""
-    model = None
 
     @abc.abstractmethod
     def fit(self, sample_x, sample_y):

@@ -1,24 +1,31 @@
 import tensorflow as tf
 from keras.layers import GlobalAveragePooling2D, Dense, Dropout
+from tensorflow.keras.models import Functional
 from tensorflow.keras import applications as tf_app
 import pyaiutils
 import os
 from Models import TF_abstract_model
-
+from typing import Tuple
 
 class TensorFlowModel(TF_abstract_model.ABS_Model):
 
     def __init__(self, parameters):
+        """
+        Initializes a TensorFlow model.
+
+        Args:
+            parameters (dict): Dictionary containing model parameters.
+        """
         if "device" in parameters:
             if parameters["device"] == "cpu":
                 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
-        self.model_name = parameters["model_name"]
-        self.dataset_name = parameters["dataset_name"]
-        self.input_shape = parameters["image_size"]
-        self.output_shape = parameters["classes"]
-        self.batch_size = parameters["batch_size"]
-        self.epochs = parameters["epochs"]
+        self.model_name: str = parameters["model_name"]
+        self.dataset_name: str = parameters["dataset_name"]
+        self.input_shape: Tuple[int, int, int] = parameters["image_size"]
+        self.output_shape: int = parameters["classes"]
+        self.batch_size: int = parameters["batch_size"]
+        self.epochs: int = parameters["epochs"]
 
         if type(self.input_shape) is str:
             self.input_shape = [
@@ -26,15 +33,26 @@ class TensorFlowModel(TF_abstract_model.ABS_Model):
             ]
         self.create_model()
 
-    def create_mobile_v2(self):
+    def create_mobile_v2(self) -> Tuple[Functional, Functional]:
+        """
+        Creates a MobileNetV2 model with the appropriate preprocessing layer.
+
+        Returns:
+            Tuple[Functional, Functional]: Base model and preprocessing function.
+        """
         base_model = tf_app.MobileNetV2(
             input_shape=self.input_shape, include_top=False, weights="imagenet"
         )
         preprocess_input = tf_app.mobilenet_v2.preprocess_input
-
         return (base_model, preprocess_input)
 
-    def create_VGG16(self):
+    def create_VGG16(self) -> Tuple[Functional, Functional]:
+        """
+        Creates a VGG16 model with the appropriate preprocessing layer.
+
+        Returns:
+            Tuple[Functional, Functional]: Base model and preprocessing function.
+        """
         base_model = tf_app.VGG16(
             input_shape=self.input_shape, include_top=False, weights="imagenet"
         )
@@ -42,7 +60,13 @@ class TensorFlowModel(TF_abstract_model.ABS_Model):
 
         return (base_model, preprocess_input)
 
-    def create_ResNet50(self):
+    def create_ResNet50(self) -> Tuple[Functional, Functional]:
+        """
+        Creates a ResNet50 model with the appropriate preprocessing layer.
+
+        Returns:
+            Tuple[Functional, Functional]: Base model and preprocessing function.
+        """
         base_model = tf_app.ResNet50(
             input_shape=self.input_shape, include_top=False, weights="imagenet"
         )
@@ -51,11 +75,12 @@ class TensorFlowModel(TF_abstract_model.ABS_Model):
         return (base_model, preprocess_input)
 
     def create_model(self):
-        """Loads a generic backbone model with custom output layers
-        models from https://www.tensorflow.org/api_docs/python/tf/keras/applications
+        """Loads a generic tensorflow model with a custom output layer
+           Any image model from https://www.tensorflow.org/api_docs/python/tf/keras/applications
+           can be easily implemented
         """
 
-        model_dict = {
+        model_dict: dict = {
             "mobile_netv2": self.create_mobile_v2,
             "VGG16": self.create_VGG16,
             "ResNet50": self.create_ResNet50,
@@ -92,8 +117,13 @@ class TensorFlowModel(TF_abstract_model.ABS_Model):
 
     def fit(self, dataset):
         """
-        Keyword arguments:
-                dataset (tf_dataset): Object containing train,test and val datasets
+        Trains the TensorFlow model on the given dataset.
+
+        Args:
+            dataset (tf.data.Dataset): Object containing train, test, and val datasets.
+
+        Returns:
+            dict: Results of the training process.
         """
 
         results = self.model.fit(
@@ -104,6 +134,7 @@ class TensorFlowModel(TF_abstract_model.ABS_Model):
             validation_data=dataset.val_dataset,
             shuffle=True,
         )
+
         return results
 
     def predict(self, dataset):
@@ -120,7 +151,7 @@ class TensorFlowModel(TF_abstract_model.ABS_Model):
                 path (string): path to save the model
 
         returns:
-        save_p (string) the full path used
+            save_p (string) the full path used
         """
         save_p = os.path.join(path, model_name + ".keras")
         self.model.save(save_p)
@@ -133,17 +164,19 @@ class TensorFlowModel(TF_abstract_model.ABS_Model):
         Keyword arguments:
                 dataset (Dataset): Concrete Dataset class with x y data
                 pred (list): List with model's predictions
+        returns:
+            list with metrics
         """
 
         labels = dataset.get_test_y()
         class_names = [i for (i, j) in enumerate(range(0, self.output_shape))]
         return [pyaiutils.get_metrics(labels, pred, class_names=class_names)]
 
-    def load_model(self, path):
+    def load_model(self, path, model_name):
         """Load the model from the given path
 
         Args:
                 path (string): path to the model folder
 
         """
-        self.model = tf.keras.models.load_model(os.path.join(path, "Base_model.keras"))
+        self.model = tf.keras.models.load_model(os.path.join(path, model_name))
