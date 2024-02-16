@@ -1,6 +1,6 @@
-import argparse
-import mlflow
 import yaml
+import mlflow
+import argparse
 import train, test, evaluate
 from datetime import datetime
 
@@ -9,6 +9,7 @@ parser.add_argument("--yaml_path", type=str)
 args = vars(parser.parse_args())
 
 timestamp = datetime.now().strftime("%m:%d:%y-%H-%M-%S")  # %H:%M:%S")
+
 
 def run_train(parameters, experiment_id):
     train.train_routine(parameters, experiment_id)
