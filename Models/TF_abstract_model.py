@@ -1,11 +1,13 @@
 import abc
 
+
 class ABS_Model(abc.ABC):
-    """ Base abstract class for each architecture model that will be created.
+    """Base abstract class for each architecture model that will be created.
 
     Args:
         abc (ABC): It's the abstract base class to create the model.
     """
+
     model_name = ""
     model = None
 
@@ -21,7 +23,7 @@ class ABS_Model(abc.ABC):
             that will train the model.
         """
         pass
-    
+
     @abc.abstractmethod
     def predict(self, dataset_test):
         """This is an abstract method to predict the class labels.
@@ -31,7 +33,7 @@ class ABS_Model(abc.ABC):
             attributes that the model will get the predictions.
         """
         pass
-    
+
     @abc.abstractmethod
     def get_metrics(self, dataset, pred):
         """This is an abstract method to get the metrics to be logged, pyaiutils API is suggested.
@@ -48,18 +50,18 @@ class ABS_Model(abc.ABC):
 
         Args:
             path (string): path to save the model
-        	
-		returns:
-		save_p (string) the full path used
+
+                returns:
+                save_p (string) the full path used
         """
         pass
 
     @abc.abstractmethod
-    def load_model(self,path):
+    def load_model(self, path):
         """Load the model from the given path
 
-		Args:
-			path (string): path to the model folder
+        Args:
+                path (string): path to the model folder
 
-		"""
+        """
         pass

@@ -1,8 +1,9 @@
 import abc
 from typing import Any
 
+
 class ABSDataset(abc.ABC):
-    
+
     @abc.abstractmethod
     def __init__(self) -> None:
         pass
