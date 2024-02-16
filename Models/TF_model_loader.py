@@ -1,11 +1,11 @@
 import tensorflow as tf
 from keras.layers import GlobalAveragePooling2D, Dense, Dropout
-from tensorflow.keras.models import Functional
+from tensorflow.keras import Model
 from tensorflow.keras import applications as tf_app
 import pyaiutils
 import os
 from Models import TF_abstract_model
-from typing import Tuple
+from typing import Tuple, Callable
 
 class TensorFlowModel(TF_abstract_model.ABS_Model):
 
@@ -33,12 +33,12 @@ class TensorFlowModel(TF_abstract_model.ABS_Model):
             ]
         self.create_model()
 
-    def create_mobile_v2(self) -> Tuple[Functional, Functional]:
+    def create_mobile_v2(self) -> Tuple[Model, Callable]:
         """
         Creates a MobileNetV2 model with the appropriate preprocessing layer.
 
         Returns:
-            Tuple[Functional, Functional]: Base model and preprocessing function.
+            Tuple[Model, Callable]: Base model and preprocessing function.
         """
         base_model = tf_app.MobileNetV2(
             input_shape=self.input_shape, include_top=False, weights="imagenet"
@@ -46,12 +46,12 @@ class TensorFlowModel(TF_abstract_model.ABS_Model):
         preprocess_input = tf_app.mobilenet_v2.preprocess_input
         return (base_model, preprocess_input)
 
-    def create_VGG16(self) -> Tuple[Functional, Functional]:
+    def create_VGG16(self) -> Tuple[Model, Callable]:
         """
         Creates a VGG16 model with the appropriate preprocessing layer.
 
         Returns:
-            Tuple[Functional, Functional]: Base model and preprocessing function.
+            Tuple[Model, Callable]: Base model and preprocessing function.
         """
         base_model = tf_app.VGG16(
             input_shape=self.input_shape, include_top=False, weights="imagenet"
@@ -60,12 +60,12 @@ class TensorFlowModel(TF_abstract_model.ABS_Model):
 
         return (base_model, preprocess_input)
 
-    def create_ResNet50(self) -> Tuple[Functional, Functional]:
+    def create_ResNet50(self) -> Tuple[Model, Callable]:
         """
         Creates a ResNet50 model with the appropriate preprocessing layer.
 
         Returns:
-            Tuple[Functional, Functional]: Base model and preprocessing function.
+            Tuple[Model, Callable]: Base model and preprocessing function.
         """
         base_model = tf_app.ResNet50(
             input_shape=self.input_shape, include_top=False, weights="imagenet"
