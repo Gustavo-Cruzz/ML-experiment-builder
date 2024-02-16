@@ -1,6 +1,5 @@
 train:
   model_name: ResNet50
-  model_class_name: TensorFlowModel
   model_path: utils/models/mobile_netv2.py
   activation_func: sparse_categorical_crossentropy
   classes: 10
