@@ -3,6 +3,7 @@ import tensorflow_datasets as tfds
 import tensorflow as tf
 from keras.utils import to_categorical
 from Datasets import TF_preprocess_img_dataset
+from typing import List 
 
 # Application specific imports.
 from Datasets import Abstract_dataset
@@ -13,7 +14,7 @@ class TensorFlowDataset(Abstract_dataset.ABSDataset):
     def __init__(self, parameters):
         self.dataset_type: str = parameters["dataset_type"]
         self.dataset_name: str = parameters["dataset_name"]
-        self.output_shape = parameters["classes"]
+        self.output_shape: int = parameters["classes"]
         preprocess_images = TF_preprocess_img_dataset.PreprocessImageDataset(parameters)
 
         self.__create_dataset()
@@ -51,22 +52,22 @@ class TensorFlowDataset(Abstract_dataset.ABSDataset):
                 "Dataset not found in tensorflow_datasets; Ensure that the dataset has 'train' or 'test' split"
             )
 
-    def get_train_data(self):
+    def get_train_data(self) -> tf.data.Dataset:
         """Returns the train dataset"""
         return self.train_dataset
 
-    def get_test_data(self):
+    def get_test_data(self) -> tf.data.Dataset:
         """Returns the test dataset"""
         return self.test_dataset
 
     @tf.autograph.experimental.do_not_convert
-    def get_train_x(self):
+    def get_train_x(self) -> list:
         """Returns the train features"""
         train_data = self.get_train_data()
         return list(train_data.map(lambda image, _: image))
 
     @tf.autograph.experimental.do_not_convert
-    def get_train_y(self):
+    def get_train_y(self) -> list:
         """Returns unprocessed and unoptimized train targets"""
         train_data = list(self.train_data.map(lambda _, label: label))
         return to_categorical(
@@ -74,13 +75,13 @@ class TensorFlowDataset(Abstract_dataset.ABSDataset):
         )
 
     @tf.autograph.experimental.do_not_convert
-    def get_test_x(self):
+    def get_test_x(self) -> list:
         """Returns the test features"""
         test_data = self.get_test_data()
         return list(test_data.map(lambda image, _: image))
 
     @tf.autograph.experimental.do_not_convert
-    def get_test_y(self):
+    def get_test_y(self) -> list:
         """Returns unprocessed and unoptimized test targets"""
         test_data = list(self.test_dataset.map(lambda _, label: label))
         return to_categorical(
