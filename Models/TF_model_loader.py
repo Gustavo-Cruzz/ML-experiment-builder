@@ -1,11 +1,12 @@
-import tensorflow as tf
-from keras.layers import GlobalAveragePooling2D, Dense, Dropout
-from tensorflow.keras import Model
-from tensorflow.keras import applications as tf_app
-import pyaiutils
 import os
-from Models import TF_abstract_model
+import pyaiutils
+import tensorflow as tf
+from tensorflow.keras import Model
 from typing import Tuple, Callable
+from Models import TF_abstract_model
+from tensorflow.keras import applications as tf_app
+from keras.layers import GlobalAveragePooling2D, Dense, Dropout
+
 
 class TensorFlowModel(TF_abstract_model.ABS_Model):
 
@@ -20,12 +21,13 @@ class TensorFlowModel(TF_abstract_model.ABS_Model):
             if parameters["device"] == "cpu":
                 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
-        self.model_name: str = parameters["model_name"]
-        self.dataset_name: str = parameters["dataset_name"]
-        self.input_shape: Tuple[int, int, int] = parameters["image_size"]
-        self.output_shape: int = parameters["classes"]
-        self.batch_size: int = parameters["batch_size"]
         self.epochs: int = parameters["epochs"]
+        self.output_shape: int = parameters["classes"]
+        self.model_name: str = parameters["model_name"]
+        self.batch_size: int = parameters["batch_size"]
+        self.dataset_name: str = parameters["dataset_name"]
+        self.activation: str = parameters["activation_func"]
+        self.input_shape: Tuple[int, int, int] = parameters["image_size"]
 
         if type(self.input_shape) is str:
             self.input_shape = [
@@ -76,8 +78,8 @@ class TensorFlowModel(TF_abstract_model.ABS_Model):
 
     def create_model(self):
         """Loads a generic tensorflow model with a custom output layer
-           Any image model from https://www.tensorflow.org/api_docs/python/tf/keras/applications
-           can be easily implemented
+        Any image model from https://www.tensorflow.org/api_docs/python/tf/keras/applications
+        can be easily implemented
         """
 
         model_dict: dict = {
@@ -90,8 +92,7 @@ class TensorFlowModel(TF_abstract_model.ABS_Model):
 
         if base_model is None:
             raise Exception(
-                f"""Invalid name for TensorFlowModel
-									 			 Valid values: {model_dict.keys()}"""
+                f"""Invalid name for TensorFlowModel; Valid values: {model_dict.keys()}"""
             )
 
         for layer in base_model.layers:
@@ -107,10 +108,9 @@ class TensorFlowModel(TF_abstract_model.ABS_Model):
         x = Dropout(0.2)(x)
 
         outputs = Dense(self.output_shape, activation="softmax")(x)
-
         self.model = tf.keras.Model(inputs, outputs)
         self.model.compile(
-            loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=False),
+            loss=self.activation(from_logits=False),
             optimizer="Adam",
             metrics=["accuracy"],
         )

@@ -1,5 +1,6 @@
 import abc
 
+
 class ABS_Model(abc.ABC):
     """Base abstract class for each architecture model that will be created.
 
