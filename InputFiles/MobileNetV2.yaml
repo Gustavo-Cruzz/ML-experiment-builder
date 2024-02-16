@@ -1,15 +1,11 @@
 train:
   model_name: mobile_netv2
-  model_path: utils/models/mobile_netv2.py
   activation_func: sparse_categorical_crossentropy
   classes: 10
   save_path:  mlruns
   batch_size: 200
   epochs: 1
   dataset_name: cifar10
-  dataset_class: TensorFlowDataset
-  dataset_type: Image
-  dataset_file_path: utils/dataset/tf_dataset.py
   image_size: [224, 224, 3] 
   target: None
   device: cpu
