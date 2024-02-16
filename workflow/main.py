@@ -10,14 +10,6 @@ args = vars(parser.parse_args())
 
 timestamp = datetime.now().strftime("%m:%d:%y-%H-%M-%S")  # %H:%M:%S")
 
-
-def _run(entrypoint, parameters={}, source_version=None, use_cache=True):
-    """Launching new run for an entrypoint"""
-
-    print(f"Launching new run for {entrypoint} and parameters={parameters}")
-    return mlflow.run(".", entrypoint, parameters={"yaml_path": args["yaml_path"]})
-
-
 def run_train(parameters, experiment_id):
     train.train_routine(parameters, experiment_id)
 
