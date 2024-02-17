@@ -1,13 +1,13 @@
 train:
   model_name: mobile_netv2
-  activation_func: sparse_categorical_crossentropy
+  activation_func: softmax
+  loss_func: sparse_categorical_crossentropy
   classes: 10
   save_path:  mlruns
   batch_size: 200
   epochs: 1
   dataset_name: cifar10
   image_size: [224, 224, 3] 
-  target: None
   device: cpu
   skip: False
   
