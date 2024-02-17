@@ -22,6 +22,7 @@ class TensorFlowModel(TF_abstract_model.ABS_Model):
                 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
         self.epochs: int = parameters["epochs"]
+        self.loss: str = parameters["loss_func"]
         self.output_shape: int = parameters["classes"]
         self.model_name: str = parameters["model_name"]
         self.batch_size: int = parameters["batch_size"]
@@ -107,10 +108,10 @@ class TensorFlowModel(TF_abstract_model.ABS_Model):
         x = Dense(64)(x)
         x = Dropout(0.2)(x)
 
-        outputs = Dense(self.output_shape, activation="softmax")(x)
+        outputs = Dense(self.output_shape, activation=self.activation)(x)
         self.model = tf.keras.Model(inputs, outputs)
         self.model.compile(
-            loss=self.activation(from_logits=False),
+            loss=self.loss(from_logits=False),
             optimizer="Adam",
             metrics=["accuracy"],
         )
