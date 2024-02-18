@@ -11,21 +11,15 @@ from Datasets import TF_preprocess_img_dataset
 class TensorFlowDataset(Abstract_dataset.ABSDataset):
 
     def __init__(self, parameters):
-        self.dataset_type: str = parameters["dataset_type"]
         self.dataset_name: str = parameters["dataset_name"]
         self.output_shape: int = parameters["classes"]
         preprocess_images = TF_preprocess_img_dataset.PreprocessImageDataset(parameters)
 
         self.__create_dataset()
 
-        if self.dataset_type.upper() == "IMAGE":
-            self.train_dataset = preprocess_images.optimize_train_set(
-                self.train_dataset
-            )
-            self.val_dataset = preprocess_images.optimize_validation_set(
-                self.val_dataset
-            )
-            self.test_dataset = preprocess_images.optimize_test_set(self.test_dataset)
+        self.train_dataset = preprocess_images.optimize_train_set(self.train_dataset)
+        self.val_dataset = preprocess_images.optimize_validation_set(self.val_dataset)
+        self.test_dataset = preprocess_images.optimize_test_set(self.test_dataset)
 
     def __create_dataset(self):
         # TODO checar funcionalidade do shuffle e proportion
