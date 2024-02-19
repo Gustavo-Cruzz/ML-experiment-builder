@@ -111,7 +111,7 @@ class TensorFlowModel(TF_abstract_model.ABS_Model):
         outputs = Dense(self.output_shape, activation=self.activation)(x)
         self.model = tf.keras.Model(inputs, outputs)
         self.model.compile(
-            loss=self.loss(from_logits=False),
+            loss=self.loss,
             optimizer="Adam",
             metrics=["accuracy"],
         )
