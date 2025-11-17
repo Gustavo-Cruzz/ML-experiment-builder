@@ -1,16 +1,16 @@
 import os
-import pyaiutils
 import tensorflow as tf
 from tensorflow.keras import Model
 from typing import Tuple, Callable
 from Models import TF_abstract_model
+from sklearn.metrics import classification_report
 from tensorflow.keras import applications as tf_app
-from keras.layers import GlobalAveragePooling2D, Dense, Dropout
+from tensorflow.keras.layers import GlobalAveragePooling2D, Dense, Dropout
 
 
 class TensorFlowModel(TF_abstract_model.ABS_Model):
 
-    def __init__(self, parameters):
+    def __init__(self, parameters, data_shape: Tuple[int, int, int]) -> None:
         """
         Initializes a TensorFlow model.
 
@@ -28,7 +28,7 @@ class TensorFlowModel(TF_abstract_model.ABS_Model):
         self.batch_size: int = parameters["batch_size"]
         self.dataset_name: str = parameters["dataset_name"]
         self.activation: str = parameters["activation_func"]
-        self.input_shape: Tuple[int, int, int] = parameters["image_size"]
+        self.input_shape: Tuple[int, int, int] = data_shape
 
         if type(self.input_shape) is str:
             self.input_shape = [
@@ -88,6 +88,8 @@ class TensorFlowModel(TF_abstract_model.ABS_Model):
             "VGG16": self.create_VGG16,
             "ResNet50": self.create_ResNet50,
         }
+        print(model_dict.get(self.model_name))
+        print(self.model_name)
 
         base_model, preprocessing_layer = model_dict.get(self.model_name)()
 
@@ -168,10 +170,12 @@ class TensorFlowModel(TF_abstract_model.ABS_Model):
         returns:
             list with metrics
         """
-
         labels = dataset.get_test_y()
         class_names = [i for (i, j) in enumerate(range(0, self.output_shape))]
-        return [pyaiutils.get_metrics(labels, pred, class_names=class_names)]
+        print(labels)
+        print("====================")
+        print(pred)
+        return [classification_report(labels, pred, target_names=class_names, output_dict=True)]
 
     def load_model(self, path, model_name):
         """Load the model from the given path
