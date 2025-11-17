@@ -2,7 +2,7 @@ import abc
 from typing import Any
 
 
-class ABSDataset(abc.ABC):
+class ABS_Dataset(abc.ABC):
     """
     Abstract base class defining methods for dataset operations.
     """

@@ -8,7 +8,7 @@ from Datasets import Abstract_dataset
 from Datasets import TF_preprocess_img_dataset
 
 
-class TensorFlowDataset(Abstract_dataset.ABSDataset):
+class TensorFlowDataset(Abstract_dataset.ABS_Dataset):
 
     def __init__(self, parameters):
         self.dataset_name: str = parameters["dataset_name"]
