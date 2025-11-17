@@ -1,7 +1,7 @@
 import mlflow
 
 
-def test_routine(params, experiment_id):
+def test_routine(params, experiment_id, dataset):
     print("\n\ntesting")
     save_path = f"..{params['save_path']}/{experiment_id}/test/"
 

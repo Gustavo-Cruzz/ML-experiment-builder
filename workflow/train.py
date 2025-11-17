@@ -3,20 +3,19 @@ import os
 import mlflow
 import tempfile
 import numpy as np
-import pyaiutils as pyai
+import Utils.Create_Graphs as pyai
 import matplotlib.pyplot as plt
 from Models.TF_model_loader import TensorFlowModel
 from typing import Dict, Any, List
-from Datasets import TF_dataset_loader
 
 
 class Train():
-    def __init__(self, params: Dict,  experiment_id: str) -> None:
+    def __init__(self, params: Dict,  experiment_id: str, dataset) -> None:
         self.params = params
         self.save_path = f"..{self.params['save_path']}/{experiment_id}/train/"
         print(self.params)
         
-        self.train_routine()
+        self.train_routine(dataset)
         
     def log_data(
         self, metrics: List, pred: List[Any], temp_dir: str
@@ -94,7 +93,7 @@ class Train():
         )
 
 
-    def train_routine(self) -> None:
+    def train_routine(self, dataset) -> None:
         """
         Executes the training routine.
 
@@ -102,10 +101,8 @@ class Train():
             experiment_id (str): Experiment ID.
         """
 
-        model = TensorFlowModel(self.params)
+        model = TensorFlowModel(self.params, dataset.get_data_shape())
         print(f"\n Training model, {model}")
-
-        dataset = TF_dataset_loader.TensorFlowDataset(self.params)
 
         # Fit, predict and log metrics and model
         results = model.fit(dataset)
