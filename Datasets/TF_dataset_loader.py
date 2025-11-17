@@ -2,7 +2,7 @@
 from typing import List
 import tensorflow as tf
 import tensorflow_datasets as tfds
-from keras.utils import to_categorical
+from tensorflow.keras.utils import to_categorical
 
 from Datasets import Abstract_dataset
 from Datasets import TF_preprocess_img_dataset
@@ -13,31 +13,32 @@ class TensorFlowDataset(Abstract_dataset.ABS_Dataset):
     def __init__(self, parameters):
         self.dataset_name: str = parameters["dataset_name"]
         self.output_shape: int = parameters["classes"]
-        preprocess_images = TF_preprocess_img_dataset.PreprocessImageDataset(parameters)
+        self.batch_size: int = parameters["batch_size"]
 
         self.__create_dataset()
+
+        preprocess_images = TF_preprocess_img_dataset.PreprocessImageDataset(parameters, self.info)
 
         self.train_dataset = preprocess_images.optimize_train_set(self.train_dataset)
         self.val_dataset = preprocess_images.optimize_validation_set(self.val_dataset)
         self.test_dataset = preprocess_images.optimize_test_set(self.test_dataset)
 
     def __create_dataset(self):
-        # TODO checar funcionalidade do shuffle e proportion
         try:
-            (ds_train, ds_test), info = tfds.load(
+            (ds_train, ds_test), self.info = tfds.load(
                 self.dataset_name,
                 split=["train", "test"],
                 as_supervised=True,
                 with_info=True,
                 shuffle_files=True,
             )
-            proportion = int(len(ds_train) * 0.2)
+            
+            train_size = self.info.splits["train"].num_examples
+            proportion = int(train_size * 0.2)
 
-            # Shuffle now to avoid getting only one class on split
-
-            ds_train = ds_train.shuffle(10)
-            self.val_dataset = ds_train.take(proportion)
+            self.val_dataset = ds_train.take(proportion) # Validation set with 20% of train data
             self.train_dataset = ds_train.skip(proportion)
+
             self.test_dataset = ds_test
 
         except tfds.core.registered.DatasetNotFoundError:
@@ -81,3 +82,8 @@ class TensorFlowDataset(Abstract_dataset.ABS_Dataset):
         return to_categorical(
             [item for sublist in test_data for item in sublist], self.output_shape
         )
+
+    def get_data_shape(self) -> List:
+        """Returns the shape of the data"""
+        for image, _ in self.train_dataset.take(1):
+            return image.shape[1:]  # Exclude batch dimension

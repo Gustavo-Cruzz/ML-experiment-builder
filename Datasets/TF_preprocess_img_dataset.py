@@ -8,16 +8,44 @@ https://www.tensorflow.org/datasets/performances
 
 
 class PreprocessImageDataset:
-    def __init__(self, parameters: dict) -> None:
+    def __init__(self, parameters: dict, info=None) -> None:
         """
         Initializes PreprocessImageDataset with given parameters.
 
         Args:
             parameters (dict): Dictionary containing parameters for preprocessing.
                 Expected keys: "image_size" (tuple), "batch_size" (int)
+            info: Optional dataset information
         """
         self.image_size: Tuple[int, int, int] = parameters["image_size"]
         self.batch_size: int = int(parameters["batch_size"])
+        self.Autotune = tf.data.experimental.AUTOTUNE
+        self.info = info
+
+
+    def convert_to_rgb(self, image: tf.Tensor, label: tf.Tensor
+    ) -> Tuple[tf.Tensor, tf.Tensor]:
+        """
+        Checks the number of channels and converts the image to 3-channel RGB 
+        if it is currently 1-channel grayscale. This is necessary to use the imagenet
+        weights in the models.
+        """
+        # Check the number of channels (the last dimension)
+        image_shape = tf.shape(image)
+        num_channels = image_shape[-1]
+        
+        # Define the condition: Check if the number of channels is 1
+        is_grayscale = tf.equal(num_channels, 1)
+        
+        # If grayscale (True), use tf.image.grayscale_to_rgb (duplicates the channel)
+        # If not grayscale (False), use the image as is
+        image = tf.cond(
+            is_grayscale, 
+            lambda: tf.image.grayscale_to_rgb(image), 
+            lambda: image
+        )
+            
+        return image, label
 
     def normalize_img(
         self, image: tf.Tensor, label: tf.Tensor
@@ -52,10 +80,16 @@ class PreprocessImageDataset:
         Returns:
             train_dataset (tf.data.Dataset): Optimized TensorFlow dataset
         """
-        train_dataset = train_dataset.batch(self.batch_size).map(
-            self.normalize_img, num_parallel_calls=tf.data.AUTOTUNE
+        train_dataset = train_dataset.map(
+            self.normalize_img, num_parallel_calls=self.Autotune
         )
-        return train_dataset.shuffle(buffer_size=10).prefetch(tf.data.AUTOTUNE)
+
+        train_dataset = train_dataset.map(
+            self.convert_to_rgb, num_parallel_calls=self.Autotune 
+        )
+        
+        train_dataset.shuffle(self.info.splits["train"].num_examples)
+        return train_dataset.batch(self.batch_size).prefetch(self.Autotune)
 
     def optimize_test_set(self, test_dataset: tf.data.Dataset) -> tf.data.Dataset:
         """
@@ -69,10 +103,15 @@ class PreprocessImageDataset:
         Returns:
             test_dataset (tf.data.Dataset): Optimized TensorFlow dataset
         """
-        test_dataset = test_dataset.batch(self.batch_size).map(
-            self.normalize_img, num_parallel_calls=tf.data.AUTOTUNE
+        test_dataset = test_dataset.map(
+            self.normalize_img, num_parallel_calls=self.Autotune
         )
-        return test_dataset.prefetch(tf.data.AUTOTUNE)
+
+        test_dataset = test_dataset.map(
+            self.convert_to_rgb, num_parallel_calls=self.Autotune 
+        )
+
+        return test_dataset.batch(self.batch_size).prefetch(self.Autotune)
 
     def optimize_validation_set(self, val_dataset: tf.data.Dataset) -> tf.data.Dataset:
         """
@@ -86,7 +125,12 @@ class PreprocessImageDataset:
         Returns:
             val_dataset (tf.data.Dataset): Optimized TensorFlow dataset
         """
-        val_dataset = val_dataset.batch(self.batch_size).map(
-            self.normalize_img, num_parallel_calls=tf.data.AUTOTUNE
+        val_dataset = val_dataset.map(
+            self.normalize_img, num_parallel_calls=self.Autotune
         )
-        return val_dataset.prefetch(tf.data.AUTOTUNE)
+
+        val_dataset = val_dataset.map(
+            self.convert_to_rgb, num_parallel_calls=self.Autotune
+        )
+
+        return val_dataset.batch(self.batch_size).prefetch(self.Autotune)
