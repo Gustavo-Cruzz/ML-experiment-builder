@@ -1,21 +1,23 @@
 import os
 import tensorflow as tf
 from tensorflow.keras import Model
-from typing import Tuple, Callable
+from typing import Tuple, Callable, Dict, Any, List, Union
 from Models import TF_abstract_model
 from sklearn.metrics import classification_report
 from tensorflow.keras import applications as tf_app
 from tensorflow.keras.layers import GlobalAveragePooling2D, Dense, Dropout
+from pathlib import Path
 
 
 class TensorFlowModel(TF_abstract_model.ABS_Model):
 
-    def __init__(self, parameters, data_shape: Tuple[int, int, int]) -> None:
+    def __init__(self, parameters: Dict[str, Any], data_shape: Union[Tuple[int, int, int], str]) -> None:
         """
         Initializes a TensorFlow model.
 
         Args:
-            parameters (dict): Dictionary containing model parameters.
+            parameters (Dict[str, Any]): Dictionary containing model parameters.
+            data_shape (Union[Tuple[int, int, int], str]): Shape of the input data.
         """
         if "device" in parameters:
             if parameters["device"] == "cpu":
@@ -28,12 +30,14 @@ class TensorFlowModel(TF_abstract_model.ABS_Model):
         self.batch_size: int = parameters["batch_size"]
         self.dataset_name: str = parameters["dataset_name"]
         self.activation: str = parameters["activation_func"]
-        self.input_shape: Tuple[int, int, int] = data_shape
-
-        if type(self.input_shape) is str:
-            self.input_shape = [
-                int(num) for num in self.input_shape.strip("[]").split(", ")
-            ]
+        
+        if isinstance(data_shape, str):
+            self.input_shape = tuple(
+                int(num) for num in data_shape.strip("[]").split(", ")
+            )
+        else:
+            self.input_shape = data_shape
+            
         self.create_model()
 
     def create_mobile_v2(self) -> Tuple[Model, Callable]:
@@ -77,26 +81,29 @@ class TensorFlowModel(TF_abstract_model.ABS_Model):
 
         return (base_model, preprocess_input)
 
-    def create_model(self):
-        """Loads a generic tensorflow model with a custom output layer
+    def create_model(self) -> None:
+        """
+        Loads a generic tensorflow model with a custom output layer.
         Any image model from https://www.tensorflow.org/api_docs/python/tf/keras/applications
-        can be easily implemented
+        can be easily implemented.
+        
+        Raises:
+            ValueError: If the model name is not supported.
         """
 
-        model_dict: dict = {
+        model_dict: Dict[str, Callable[[], Tuple[Model, Callable]]] = {
             "mobile_netv2": self.create_mobile_v2,
             "VGG16": self.create_VGG16,
             "ResNet50": self.create_ResNet50,
         }
-        print(model_dict.get(self.model_name))
-        print(self.model_name)
+        print(f"Loading model: {self.model_name}")
 
-        base_model, preprocessing_layer = model_dict.get(self.model_name)()
-
-        if base_model is None:
-            raise Exception(
-                f"""Invalid name for TensorFlowModel; Valid values: {model_dict.keys()}"""
+        if self.model_name not in model_dict:
+             raise ValueError(
+                f"Invalid name for TensorFlowModel: {self.model_name}. Valid values: {list(model_dict.keys())}"
             )
+
+        base_model, preprocessing_layer = model_dict[self.model_name]()
 
         for layer in base_model.layers:
             layer.trainable = False
@@ -118,15 +125,15 @@ class TensorFlowModel(TF_abstract_model.ABS_Model):
             metrics=["accuracy"],
         )
 
-    def fit(self, dataset):
+    def fit(self, dataset: Any) -> Any:
         """
         Trains the TensorFlow model on the given dataset.
 
         Args:
-            dataset (tf.data.Dataset): Object containing train, test, and val datasets.
+            dataset (Any): Object containing train, test, and val datasets.
 
         Returns:
-            dict: Results of the training process.
+            Any: Results of the training process (History object).
         """
 
         results = self.model.fit(
@@ -140,48 +147,67 @@ class TensorFlowModel(TF_abstract_model.ABS_Model):
 
         return results
 
-    def predict(self, dataset):
+    def predict(self, dataset: Any) -> Any:
         """
-        Keyword arguments:
-                dataset (tf_dataset): Object containing train,test and val datasets
+        Generates predictions for the test dataset.
+
+        Args:
+            dataset (Any): Object containing train, test, and val datasets.
+            
+        Returns:
+            Any: Model predictions.
         """
         return self.model.predict(dataset.test_dataset)
 
-    def save_model(self, path, model_name):
-        """Save the model in the given path
+    def save_model(self, path: Union[str, Path], model_name: str) -> str:
+        """
+        Save the model in the given path.
 
         Args:
-                path (string): path to save the model
+            path (Union[str, Path]): Path to save the model.
+            model_name (str): Name of the model file.
 
-        returns:
-            save_p (string) the full path used
+        Returns:
+            str: The full path used.
         """
-        save_p = os.path.join(path, model_name + ".keras")
+        save_p = Path(path) / f"{model_name}.keras"
         self.model.save(save_p)
-        return save_p
+        return str(save_p)
 
-    def get_metrics(self, dataset, pred):
+    def get_metrics(self, dataset: Any, pred: Any) -> List[Dict[str, Any]]:
         """
-        Calculates metrics from model predictions
+        Calculates metrics from model predictions.
 
-        Keyword arguments:
-                dataset (Dataset): Concrete Dataset class with x y data
-                pred (list): List with model's predictions
-        returns:
-            list with metrics
+        Args:
+            dataset (Any): Concrete Dataset class with x y data.
+            pred (Any): List with model's predictions.
+            
+        Returns:
+            List[Dict[str, Any]]: List with metrics dictionary.
         """
         labels = dataset.get_test_y()
-        class_names = [i for (i, j) in enumerate(range(0, self.output_shape))]
-        print(labels)
-        print("====================")
-        print(pred)
-        return [classification_report(labels, pred, target_names=class_names, output_dict=True)]
+        class_names = [str(i) for i in range(self.output_shape)]
+        
+        # Convert predictions to class indices if they are probabilities
+        if len(pred.shape) > 1 and pred.shape[1] > 1:
+            y_pred = pred.argmax(axis=1)
+        else:
+            y_pred = (pred > 0.5).astype(int)
+            
+        # Convert one-hot encoded labels to class indices if necessary
+        if len(labels.shape) > 1 and labels.shape[1] > 1:
+            y_true = labels.argmax(axis=1)
+        else:
+            y_true = labels
 
-    def load_model(self, path, model_name):
-        """Load the model from the given path
+        return [classification_report(y_true, y_pred, target_names=class_names, output_dict=True)]
+
+    def load_model(self, path: Union[str, Path], model_name: str) -> None:
+        """
+        Load the model from the given path.
 
         Args:
-                path (string): path to the model folder
-
+            path (Union[str, Path]): Path to the model folder.
+            model_name (str): Name of the model file.
         """
-        self.model = tf.keras.models.load_model(os.path.join(path, model_name))
+        self.model = tf.keras.models.load_model(Path(path) / model_name)
