@@ -7,12 +7,21 @@ import Utils.Create_Graphs as pyai
 import matplotlib.pyplot as plt
 from Models.TF_model_loader import TensorFlowModel
 from typing import Dict, Any, List
+from pathlib import Path
 
 
 class Train():
-    def __init__(self, params: Dict,  experiment_id: str, dataset) -> None:
+    def __init__(self, params: Dict,  experiment_id: str, dataset: Any) -> None:
+        """
+        Initializes the Train class.
+
+        Args:
+            params (Dict): Dictionary containing training parameters.
+            experiment_id (str): The ID of the current MLflow experiment.
+            dataset (Any): The dataset object to be used for training.
+        """
         self.params = params
-        self.save_path = f"..{self.params['save_path']}/{experiment_id}/train/"
+        self.save_path = Path(f"..{self.params['save_path']}") / experiment_id / "train"
         print(self.params)
         
         self.train_routine(dataset)
@@ -28,14 +37,19 @@ class Train():
             pred (List[Any]): List of predictions.
             temp_dir (str): Temporary directory path.
         """
-        prediction_file_path = os.path.join(self.save_path, "prediction.txt")
+        prediction_file_path = self.save_path / "prediction.txt"
+        
+        # Ensure the directory exists
+        self.save_path.mkdir(parents=True, exist_ok=True)
+
         with open(prediction_file_path, "w") as file:
             file.write("\n".join(map(str, pred)))
 
         mlflow.log_param("parameters", self.params)
-        mlflow.log_param("save_path", self.save_path)
-        mlflow.log_artifacts(self.save_path)
-        mlflow.log_dict(metrics[0].to_df())  # Log all metrics
+        mlflow.log_param("save_path", str(self.save_path))
+        mlflow.log_artifacts(str(self.save_path))
+        if metrics and len(metrics) > 0:
+             mlflow.log_dict(metrics[0], "metrics.json") # metrics[0] is a dict from classification_report
 
 
     def plot_training_history(self, results: Any, temp_dir: str) -> None:
@@ -43,7 +57,7 @@ class Train():
         Plots the training history and saves the plots to the temporary directory.
 
         Args:
-            results (Any): Results of the training process.
+            results (Any): Results of the training process (History object).
             temp_dir (str): Temporary directory path.
         """
         print("type_results", type(results))
@@ -57,10 +71,11 @@ class Train():
             plt.title(f"Model's {key} - {final_value}")
             plt.xlabel("Epochs")
             plt.ylabel("Values")
-            plt.plot(value, label="key")
-            plt.plot(results.history[f"val_{key}"], label=f"val_{key}")
+            plt.plot(value, label=key)
+            if f"val_{key}" in results.history:
+                plt.plot(results.history[f"val_{key}"], label=f"val_{key}")
             plt.legend()
-            plt.savefig(temp_dir)
+            plt.savefig(os.path.join(temp_dir, f"{key}.png"))
             plt.close()
 
 
@@ -75,10 +90,10 @@ class Train():
         Plots various training graphics and saves them to the temporary directory.
 
         Args:
-            y_test (np.ndarray): Test data.
+            y_test (np.ndarray): Test data labels.
             pred (np.ndarray): Predicted data.
             temp_dir (str): Temporary directory path.
-            model (TensorflowModel): Trained model.
+            model (TensorFlowModel): Trained model.
         """
         n_classes = [i for i in range(model.output_shape)]
 
@@ -93,12 +108,12 @@ class Train():
         )
 
 
-    def train_routine(self, dataset) -> None:
+    def train_routine(self, dataset: Any) -> None:
         """
         Executes the training routine.
 
         Args:
-            experiment_id (str): Experiment ID.
+            dataset (Any): The dataset object.
         """
 
         model = TensorFlowModel(self.params, dataset.get_data_shape())
