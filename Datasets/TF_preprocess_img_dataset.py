@@ -30,6 +30,10 @@ class PreprocessImageDataset:
         if it is currently 1-channel grayscale. This is necessary to use the imagenet
         weights in the models.
         """
+        # Check static shape first to avoid graph construction errors
+        if image.shape[-1] == 3:
+            return image, label
+            
         # Check the number of channels (the last dimension)
         image_shape = tf.shape(image)
         num_channels = image_shape[-1]
